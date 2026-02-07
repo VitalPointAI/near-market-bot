@@ -1,19 +1,24 @@
 # Near AI Market Bot 🤖
 
-A Telegram bot that broadcasts updates from the [Near AI Marketplace](https://market.near.ai).
+Telegram bot that broadcasts updates from the [Near AI Marketplace](https://market.near.ai).
 
 ## Features
 
-- **Channel Updates**: Posts summaries of marketplace activity every 5 minutes
-  - New jobs posted
-  - New bids placed
-  - Bids accepted
-  - Jobs completed
+- 📢 **Channel Updates**: Posts summaries of new jobs, bids, and accepted bids every 5 minutes
+- 🔔 **Personal Notifications**: Users can subscribe to specific agents, keywords, or tags via DM
+- 📊 **Status Command**: Check bot status and tracking stats
 
-- **DM Subscriptions**: Users can subscribe to personalized notifications
-  - Follow specific agents to see their bids
-  - Watch for jobs matching keywords
-  - Track specific tags
+## Bot Commands
+
+| Command | Description |
+|---------|-------------|
+| `/start` | Welcome message and help |
+| `/status` | Show bot stats (jobs/bids tracked) |
+| `/follow <agent_id>` | Get notified when an agent bids (DM only) |
+| `/unfollow <agent_id>` | Stop following an agent |
+| `/keyword <word>` | Get notified about jobs matching a keyword |
+| `/tag <tag>` | Get notified about jobs with a specific tag |
+| `/mysubs` | View your subscriptions |
 
 ## Setup
 
@@ -21,155 +26,87 @@ A Telegram bot that broadcasts updates from the [Near AI Marketplace](https://ma
 
 1. Message [@BotFather](https://t.me/BotFather) on Telegram
 2. Send `/newbot` and follow the prompts
-3. Save the bot token
+3. Copy the bot token (looks like `123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11`)
 
-### 2. Create a Channel
+### 2. Create a Channel (Optional)
 
-1. Create a new Telegram channel (e.g., @nearaimarket)
-2. Add your bot as an administrator with posting permissions
+1. Create a Telegram channel for public updates
+2. Add your bot as an admin with permission to post
+3. Get the channel username (e.g., `@nearaimarket`)
 
-### 3. Configure the Bot
+### 3. Configure Environment
+
+Create a `.env` file:
 
 ```bash
-# Clone the repository
-git clone https://github.com/VitalPointAI/near-market-bot.git
-cd near-market-bot
+# Required
+TELEGRAM_BOT_TOKEN=your_bot_token_here
 
-# Install dependencies
-npm install
-
-# Create configuration
-cp .env.example .env
-
-# Edit .env with your settings:
-# - TELEGRAM_BOT_TOKEN: Your bot token from BotFather
-# - CHANNEL_ID: Your channel (@channelname or numeric ID)
+# Optional
+CHANNEL_ID=@nearaimarket          # Channel for public updates
+UPDATE_INTERVAL="*/5 * * * *"     # Cron schedule (default: every 5 min)
+NEAR_MARKET_API_KEY=              # API key if required
 ```
 
-### 4. Run the Bot
+### 4. Install and Run
 
 ```bash
-# Development mode (with auto-reload)
-npm run dev
+# Install dependencies (include dev for building)
+npm install --include=dev
 
-# Production mode
+# Run tests to verify everything works
+npm run test:full
+
+# Build TypeScript
 npm run build
+
+# Start the bot
 npm start
 ```
 
-## Bot Commands
+### Development Mode
 
-### In Channel
-The bot automatically posts updates. No commands needed.
+For development with auto-reload:
 
-### In DMs
-| Command | Description |
-|---------|-------------|
-| `/start` | Welcome message and help |
-| `/status` | Bot status and stats |
-| `/follow <agent_id>` | Follow an agent's activity |
-| `/unfollow <agent_id>` | Unfollow an agent |
-| `/keyword <word>` | Get notified about matching jobs |
-| `/tag <tag>` | Watch for jobs with a specific tag |
-| `/mysubs` | View your subscriptions |
-
-## Message Format
-
-### New Job
-```
-🆕 NEW JOB POSTED
-
-📋 Build a Telegram Bot
-💰 10 NEAR
-🏷️ #telegram #bot
-
-Create a bot that monitors marketplace activity...
-
-🔗 View on Marketplace
+```bash
+npm run dev
 ```
 
-### New Bid
-```
-💼 NEW BID
+## Testing
 
-📋 Job: Build a Telegram Bot
-💰 Amount: 8 NEAR
-⏱️ ETA: 48h
-👤 Bidder: c4d60f0b...
+Run the test suite (no Telegram token required):
 
-📝 I can build this bot with...
+```bash
+npm run test:full
 ```
 
-### Bid Accepted
-```
-🎉 BID ACCEPTED
+This tests:
+- ✅ API connectivity to market.near.ai
+- ✅ State tracking for jobs and bids
+- ✅ Subscription management
+- ✅ Message formatting
 
-📋 Job: Build a Telegram Bot
-💰 Amount: 8 NEAR
-👤 Winner: c4d60f0b...
-
-Congratulations to the winning agent!
-```
-
-### Summary Update
-```
-📊 MARKETPLACE UPDATE
-
-🆕 3 new jobs
-  • Build a Discord bot (10Ⓝ)
-  • Write documentation (5Ⓝ)
-  • Create an API wrapper (Open)
-
-💼 5 new bids
-
-🎉 1 bid accepted
-  • Telegram notification bot → 8Ⓝ
-```
-
-## Architecture
+## Project Structure
 
 ```
 src/
 ├── index.ts        # Main bot entry point
 ├── api.ts          # Near AI Marketplace API client
 ├── tracker.ts      # State tracking and change detection
-├── format.ts       # Message formatting for Telegram
-└── subscriptions.ts # User subscription management
+├── subscriptions.ts # User subscription management
+├── format.ts       # Telegram message formatting
+├── test.ts         # Basic API test
+└── test-full.ts    # Comprehensive test suite
 ```
 
-## API Endpoints Used
+## How It Works
 
-- `GET /v1/jobs` - List all jobs
-- `GET /v1/jobs/{id}` - Get job details
-- `GET /v1/jobs/{id}/bids` - Get bids for a job
-- `GET /v1/agents/{id}` - Get agent info
-
-## Deployment
-
-### Using PM2
-
-```bash
-npm run build
-pm2 start dist/index.js --name near-market-bot
-pm2 save
-```
-
-### Using Docker
-
-```dockerfile
-FROM node:20-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --production
-COPY dist ./dist
-COPY data ./data
-CMD ["node", "dist/index.js"]
-```
+1. **Initialization**: On startup, loads current jobs/bids (no notifications)
+2. **Polling**: Every 5 minutes, fetches jobs and compares to saved state
+3. **Change Detection**: New jobs, bids, or status changes trigger notifications
+4. **Channel Updates**: Summary posted to the public channel
+5. **Personal Notifications**: Subscribers receive relevant updates in DM
 
 ## License
 
 MIT
-
-## Author
-
-Created by [jim_agent](https://market.near.ai/agents/jim_agent) for the Near AI Marketplace.

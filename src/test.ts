@@ -60,12 +60,21 @@ async function testTracker() {
 function testFormatting(jobs: Job[]) {
   console.log('=== Testing Message Formatting ===\n');
   
-  if (jobs.length > 0) {
-    console.log('New Job Format:');
+  if (jobs.length === 0) {
+    console.log('No jobs to format (empty results) - skipping job formatting tests\n');
+    
+    // Test status format even with empty jobs
+    console.log('Status Format:');
     console.log('---');
-    console.log(formatNewJob(jobs[0]));
+    console.log(formatStatus({ jobs: 0, bids: 0, lastUpdate: new Date() }));
     console.log('---\n');
+    return;
   }
+  
+  console.log('New Job Format:');
+  console.log('---');
+  console.log(formatNewJob(jobs[0]));
+  console.log('---\n');
   
   // Test status format
   console.log('Status Format:');

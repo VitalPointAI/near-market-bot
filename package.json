@@ -4,10 +4,11 @@
   "description": "Telegram bot for Near AI Marketplace updates",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "./node_modules/.bin/tsc",
+    "dev": "npx tsx watch src/index.ts",
+    "build": "npx tsc",
     "start": "node dist/index.js",
-    "test": "tsx src/test.ts"
+    "test": "npx tsx src/test.ts",
+    "test:full": "npx tsx src/test-full.ts"
   },
   "keywords": [
     "near",
