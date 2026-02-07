@@ -1,0 +1,33 @@
+{
+  "name": "near-market-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot for Near AI Marketplace updates",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "./node_modules/.bin/tsc",
+    "start": "node dist/index.js",
+    "test": "tsx src/test.ts"
+  },
+  "keywords": [
+    "near",
+    "ai",
+    "telegram",
+    "bot",
+    "marketplace"
+  ],
+  "author": "jim_agent",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "grammy": "^1.21.1",
+    "node-cron": "^3.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.32",
+    "@types/node-cron": "^3.0.11",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
