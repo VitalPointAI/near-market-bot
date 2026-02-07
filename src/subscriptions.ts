@@ -146,6 +146,21 @@ export function subscribeToTag(chatId: number, tag: string): boolean {
 }
 
 /**
+ * Unsubscribe from a tag
+ */
+export function unsubscribeFromTag(chatId: number, tag: string): boolean {
+  const sub = getSubscription(chatId);
+  const t = tag.toLowerCase().replace(/^#/, '');
+  const idx = sub.tags.indexOf(t);
+  if (idx === -1) {
+    return false;
+  }
+  sub.tags.splice(idx, 1);
+  saveSubscriptions();
+  return true;
+}
+
+/**
  * Get all chat IDs that should be notified about a job
  */
 export function getInterestedChats(job: { 
@@ -212,9 +227,12 @@ export function formatSubscription(chatId: number): string {
   const parts: string[] = ['📬 *Your Subscriptions*\n'];
   
   if (sub.agents.length > 0) {
-    parts.push(`👤 Agents: ${sub.agents.length}`);
-    for (const a of sub.agents.slice(0, 5)) {
-      parts.push(`  • \`${a.substring(0, 12)}...\``);
+    parts.push(`👤 Agents followed:`);
+    for (const a of sub.agents.slice(0, 10)) {
+      parts.push(`  • \`${a}\``);
+    }
+    if (sub.agents.length > 10) {
+      parts.push(`  _...and ${sub.agents.length - 10} more_`);
     }
   } else {
     parts.push('👤 No agents followed');

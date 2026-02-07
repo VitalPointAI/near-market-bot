@@ -26,6 +26,7 @@ import {
   subscribeToKeyword,
   unsubscribeFromKeyword,
   subscribeToTag,
+  unsubscribeFromTag,
   formatSubscription,
   getInterestedChats,
   getAgentFollowers,
@@ -33,7 +34,7 @@ import {
 
 // Environment variables
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const CHANNEL_ID = process.env.CHANNEL_ID || '@nearaimarket';
+const CHANNEL_ID = process.env.CHANNEL_ID || ''; // Empty = no channel posting
 const UPDATE_INTERVAL = process.env.UPDATE_INTERVAL || '*/5 * * * *'; // Every 5 minutes
 
 if (!BOT_TOKEN) {
@@ -51,7 +52,7 @@ let initialized = false;
  * Post update to channel
  */
 async function postToChannel(message: string): Promise<void> {
-  if (!message.trim()) return;
+  if (!message.trim() || !CHANNEL_ID) return;
   
   try {
     await bot.api.sendMessage(CHANNEL_ID, message, {
@@ -135,6 +136,7 @@ bot.command('start', async (ctx) => {
   const isPrivate = ctx.chat?.type === 'private';
   
   if (isPrivate) {
+    const channelLine = CHANNEL_ID ? `\nJoin ${CHANNEL_ID} for public updates!` : '';
     await ctx.reply(
       `👋 Welcome to the Near AI Market Bot!
 
@@ -144,11 +146,11 @@ I post updates about jobs, bids, and accepted bids from market.near.ai
 /status - Bot status
 /follow <agent_id> - Follow an agent
 /unfollow <agent_id> - Unfollow an agent
-/keyword <word> - Get notified about jobs matching a keyword
-/tag <tag> - Get notified about jobs with a tag
-/mysubs - View your subscriptions
-
-Join @nearaimarket for public updates!`,
+/keyword <word> - Watch for keyword
+/unkeyword <word> - Stop watching keyword
+/tag <tag> - Watch for tag
+/untag <tag> - Stop watching tag
+/mysubs - View your subscriptions${channelLine}`,
       { parse_mode: 'Markdown' }
     );
   } else {
@@ -167,15 +169,15 @@ bot.command('follow', async (ctx) => {
     return;
   }
   
-  const agentId = ctx.message?.text?.split(' ')[1];
+  const agentId = ctx.match?.trim();
   if (!agentId) {
-    await ctx.reply('Usage: /follow <agent_id>');
+    await ctx.reply('Usage: /follow <agent_id>\n\nExample: /follow c4d60f0b-e3a6-4329-bfa7-139198293e35');
     return;
   }
   
   const success = subscribeToAgent(ctx.chat.id, agentId);
   if (success) {
-    await ctx.reply(`✅ Now following agent \`${agentId.substring(0, 12)}...\`\nYou'll be notified when they bid on jobs.`, { parse_mode: 'Markdown' });
+    await ctx.reply(`✅ Now following agent:\n\`${agentId}\`\n\nYou'll be notified when they bid on jobs.`, { parse_mode: 'Markdown' });
   } else {
     await ctx.reply('You\'re already following this agent.');
   }
@@ -187,7 +189,7 @@ bot.command('unfollow', async (ctx) => {
     return;
   }
   
-  const agentId = ctx.message?.text?.split(' ')[1];
+  const agentId = ctx.match?.trim();
   if (!agentId) {
     await ctx.reply('Usage: /unfollow <agent_id>');
     return;
@@ -207,7 +209,7 @@ bot.command('keyword', async (ctx) => {
     return;
   }
   
-  const keyword = ctx.message?.text?.split(' ').slice(1).join(' ');
+  const keyword = ctx.match?.trim();
   if (!keyword) {
     await ctx.reply('Usage: /keyword <word or phrase>');
     return;
@@ -227,7 +229,7 @@ bot.command('tag', async (ctx) => {
     return;
   }
   
-  const tag = ctx.message?.text?.split(' ')[1];
+  const tag = ctx.match?.trim();
   if (!tag) {
     await ctx.reply('Usage: /tag <tag_name>');
     return;
@@ -238,6 +240,46 @@ bot.command('tag', async (ctx) => {
     await ctx.reply(`✅ Now watching for jobs tagged #${tag.replace(/^#/, '')}`);
   } else {
     await ctx.reply('You\'re already watching for this tag.');
+  }
+});
+
+bot.command('unkeyword', async (ctx) => {
+  if (ctx.chat?.type !== 'private') {
+    await ctx.reply('This command only works in DMs.');
+    return;
+  }
+  
+  const keyword = ctx.match?.trim();
+  if (!keyword) {
+    await ctx.reply('Usage: /unkeyword <word>');
+    return;
+  }
+  
+  const success = unsubscribeFromKeyword(ctx.chat.id, keyword);
+  if (success) {
+    await ctx.reply(`✅ Removed keyword "${keyword}"`);
+  } else {
+    await ctx.reply('You weren\'t watching for this keyword.');
+  }
+});
+
+bot.command('untag', async (ctx) => {
+  if (ctx.chat?.type !== 'private') {
+    await ctx.reply('This command only works in DMs.');
+    return;
+  }
+  
+  const tag = ctx.match?.trim();
+  if (!tag) {
+    await ctx.reply('Usage: /untag <tag_name>');
+    return;
+  }
+  
+  const success = unsubscribeFromTag(ctx.chat.id, tag);
+  if (success) {
+    await ctx.reply(`✅ Removed tag #${tag.replace(/^#/, '')}`);
+  } else {
+    await ctx.reply('You weren\'t watching for this tag.');
   }
 });
 

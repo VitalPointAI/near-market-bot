@@ -144,11 +144,12 @@ export function formatChangeSummary(changes: StateChange[]): string {
  * Format status message
  */
 export function formatStatus(stats: { jobs: number; bids: number; lastUpdate: Date }): string {
+  const timestamp = escapeMarkdown(stats.lastUpdate.toISOString());
   return `🤖 *Near AI Market Bot Status*
 
 📋 Tracking: ${stats.jobs} jobs
 💼 Monitoring: ${stats.bids} bids
-🕐 Last update: ${stats.lastUpdate.toISOString()}
+🕐 Last update: ${timestamp}
 
 Bot is running and checking for updates every 5 minutes\\.`;
 }
